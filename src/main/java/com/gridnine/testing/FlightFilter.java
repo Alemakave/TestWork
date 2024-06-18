@@ -7,7 +7,19 @@ import java.util.stream.Collectors;
 public class FlightFilter {
     public List<Flight> filterToValidDate(List<Flight> flights) {
         return flights.stream()
-                    .filter(flight -> flight.getSegments().get(0).getDepartureDate().isAfter(LocalDateTime.now()))
+                    .filter(flight -> {
+                        boolean correctFlight = true;
+
+                        for (Segment segment : flight.getSegments()) {
+                            correctFlight = segment.getDepartureDate().isAfter(LocalDateTime.now());
+
+                            if (!correctFlight) {
+                                return false;
+                            }
+                        }
+
+                        return correctFlight;
+                    })
                     .collect(Collectors.toList());
     }
 
@@ -30,12 +42,15 @@ public class FlightFilter {
                     .filter(flight -> {
                         List<Segment> segments = flight.getSegments();
                         if (segments.size() > 1) {
+                            int count = 0;
                             for (int i = 0; i < segments.size() - 1; i++) {
                                 if (i == segments.size() - 1) {
                                     return true;
                                 }
 
-                                if (segments.get(i).getArrivalDate().plusHours(2).isBefore(segments.get(i + 1).getDepartureDate())) {
+                                count += segments.get(i).getArrivalDate().getSecond() - segments.get(i + 1).getDepartureDate().getSecond();
+
+                                if (count > 2 * 60 * 60) {
                                     return false;
                                 }
                             }
